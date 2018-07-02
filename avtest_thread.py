@@ -6,10 +6,6 @@ from threading import Thread
 
 class FTPThread(Thread):
     def __init__(self, file_from_json):
-
-        if file_from_json is None:
-            raise Exception(AttributeError, "Path to JSON is empty!!!")
-
         """Инициализация потока"""
         Thread.__init__(self)
         self.file = file_from_json
@@ -24,36 +20,28 @@ class FTPThread(Thread):
     def __del__(self):
         self.ftp.close()
 
-    def _set_from_json(self):
-
+    def set_from_json(self):
         # Checking port in JSON
         if "port" in self.dest:
             self.port = self.dest["port"]
-
         # Checking username in JSON
         if "user" in self.dest:
             self.user = self.dest["user"]
-
         # Checking pass in JSON
         if "pass" in self.dest:
             self.passwd = self.dest["pass"]
 
     def run(self):
-        self._set_from_json()
+        self.set_from_json()
 
         info = "From: " + self.file["from"] + "\t"
         info += "\tTo: " + "ftp://" + self.dest["server"] + "/" + self.dest["dir"] + "\n"
         info += self.ftp.connect(self.dest["server"], self.port) + "\n"
         info += self.ftp.login(self.user, self.passwd) + "\n"
 
-        try:
-            fobj = open(self.file["from"], 'rb')
-        except IOError as e:
-            print(u'Couldn\'t open file!!!' )
-        else:
-            with fobj:
-                info += self.ftp.storbinary('STOR ' + self.path_to, fobj, 1024)
-                info += "\nFile size: " + str(os.path.getsize(self.file["from"])) + " bytes\n"
+        with open(self.file["from"], 'rb') as fobj:
+            info += self.ftp.storbinary('STOR ' + self.path_to, fobj, 1024)
+            info += "\nFile size: " + str(os.path.getsize(self.file["from"])) + " bytes\n"
 
         print(info)
 
