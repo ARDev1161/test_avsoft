@@ -11,7 +11,6 @@ class FTPThread(Thread):
         if file_from_json is None:
             raise Exception(AttributeError, "File in JSON is empty!!!")
 
-        """Инициализация потока"""
         Thread.__init__(self)
 
         self.ftp = ftplib.FTP()
