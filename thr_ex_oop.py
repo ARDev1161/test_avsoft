@@ -1,6 +1,6 @@
 import json
 import os.path
-from ftplib import FTP
+import ftplib
 from threading import Thread
 import socket
 
@@ -14,7 +14,7 @@ class FTPThread(Thread):
         """Инициализация потока"""
         Thread.__init__(self)
 
-        self.ftp = FTP()
+        self.ftp = ftplib.FTP()
 
         self.user = ""
         self.passwd = ""
@@ -61,48 +61,49 @@ class FTPThread(Thread):
 
         info = "From: " + self.file["from"] + "\t"
         info += "\tTo: " + "ftp://" + self.dest["server"] + "/" + self.dest["dir"] + "\n"
-        
+
         try:
             connecting = self.ftp.connect(self.dest["server"], self.port)
-        except socket.error,e:
-            print('Unable to connect!,%s'%e)
+        except socket.error:
+            print('Unable to connect!')
         else:
             with connecting:
-                info += conn + "\n"
-        
+                info += connecting + "\n"
+
         try:
             logining = self.ftp.login(self.user, self.passwd)
-        except e:
-            print('Unable to connect!,%s'%e)
+        except ftplib.all_errors:
+            print('Unable to connect!')
         else:
             with logining:
                 info += logining + "\n"
 
         try:
             fobj = open(self.file["from"], 'rb')
-        except AttributeError as e:
-            print(u'Couldn\'t open file!!!' )
+        except AttributeError:
+            print(u'Couldn\'t open file!!!')
         else:
             with fobj:
                 try:
                     storing = self.ftp.storbinary('STOR ' + self.path_to, fobj, 1024)
-                except ftplib.all_errors, e:
-                    print('Unable to storing!,%s'%e)
+                except ftplib.all_errors:
+                    print('Unable to storing!')
                 else:
                     with storing:
                         info += storing
-                      
+
         info += "\nFile size: " + str(os.path.getsize(self.file["from"])) + " bytes\n"
 
         print(info)
 
 
 def main(json_file):
+    files = {}
 
     try:
         f_json = open(json_file, "r")
-    except IOError as e:
-            print(u'Couldn\'t open JSON file!!!')
+    except IOError:
+        print(u'Couldn\'t open JSON file!!!')
     else:
         with f_json:
             # Reading JSON file in data
