@@ -2,6 +2,7 @@ import json
 import os.path
 from ftplib import FTP
 from threading import Thread
+import socket
 
 
 class FTPThread(Thread):
@@ -60,8 +61,22 @@ class FTPThread(Thread):
 
         info = "From: " + self.file["from"] + "\t"
         info += "\tTo: " + "ftp://" + self.dest["server"] + "/" + self.dest["dir"] + "\n"
-        info += self.ftp.connect(self.dest["server"], self.port) + "\n"
-        info += self.ftp.login(self.user, self.passwd) + "\n"
+        
+        try:
+            connecting = self.ftp.connect(self.dest["server"], self.port)
+        except socket.error,e:
+            print('Unable to connect!,%s'%e)
+        else:
+            with connecting:
+                info += conn + "\n"
+        
+        try:
+            logining = self.ftp.login(self.user, self.passwd)
+        except e:
+            print('Unable to connect!,%s'%e)
+        else:
+            with logining:
+                info += logining + "\n"
 
         try:
             fobj = open(self.file["from"], 'rb')
@@ -69,8 +84,15 @@ class FTPThread(Thread):
             print(u'Couldn\'t open file!!!' )
         else:
             with fobj:
-                info += self.ftp.storbinary('STOR ' + self.path_to, fobj, 1024)
-                info += "\nFile size: " + str(os.path.getsize(self.file["from"])) + " bytes\n"
+                try:
+                    storing = self.ftp.storbinary('STOR ' + self.path_to, fobj, 1024)
+                except ftplib.all_errors, e:
+                    print('Unable to storing!,%s'%e)
+                else:
+                    with storing:
+                        info += storing
+                      
+        info += "\nFile size: " + str(os.path.getsize(self.file["from"])) + " bytes\n"
 
         print(info)
 
